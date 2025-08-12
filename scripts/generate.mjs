@@ -57,7 +57,7 @@ async function buildClient(dir) {
   copySharedAssets(out);
 
   // Rendre toutes les pages ejs
-  const pages = glob.sync('template/pages/*.ejs', { cwd: root, absolute: true });
+  const pages = glob.sync(path.join(TEMPLATE, 'pages', '*.ejs'), { absolute: true });
   for (const page of pages) {
     const name = path.basename(page, '.ejs');
     const destFile = path.join(out, name === 'index' ? 'index.html' : name, name === 'index' ? '' : 'index.html');
