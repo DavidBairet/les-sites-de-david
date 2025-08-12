@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="<%= site.lang || 'fr' %>">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><%= page && page.title ? page.title + ' – ' + site.brand : site.title %></title>
+  <meta name="description" content="<%= site.description %>" />
+  <% if (basePath) { %><base href="<%= basePath %>/"><% } %>
+  <link rel="stylesheet" href="template/styles/main.css">
+  <!-- Open Graph / Twitter basic -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="<%= site.title %>">
+  <meta property="og:description" content="<%= site.description %>">
+  <meta property="og:image" content="<%= site.seo?.ogImage || site.hero?.image || 'template/assets/placeholder.svg' %>">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "<%= site.brand %>",
+    "image": "<%= site.seo?.ogImage || site.hero?.image || '' %>",
+    "address": {"@type":"PostalAddress","addressLocality":"<%= site.contact?.city || '' %>"},
+    "telephone": "<%= site.contact?.phone || '' %>",
+    "url": ""
+  }
+  </script>
+</head>
+<body>

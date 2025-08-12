@@ -1,0 +1,36 @@
+<%- include('../partials/head', { page: { title: 'Mentions légales' } }) %>
+<%- include('../partials/header') %>
+<header class="header-image"><div class="overlay" aria-hidden="true"></div><h1>Mentions légales</h1></header>
+<main class="container" id="legal">
+  <section aria-labelledby="editeur">
+    <h2 id="editeur">Éditeur du site</h2>
+    <p><strong>Nom / Dénomination :</strong> <%= site.legal.editor.entity %></p>
+    <p><strong>Représentant légal :</strong> <%= site.legal.editor.representative %></p>
+    <p><strong>Statut :</strong> <%= site.legal.editor.status %></p>
+    <p><strong>SIRET :</strong> <%= site.legal.editor.siret %></p>
+    <p><strong>Email :</strong> <a href="mailto:<%= site.legal.editor.email %>"><%= site.legal.editor.email %></a></p>
+  </section>
+  <section aria-labelledby="conception">
+    <h2 id="conception">Conception & développement</h2>
+    <p><strong><%= site.legal.provider.entity %></strong><br>
+    SIRET : <%= site.legal.provider.siret %><br>
+    <a href="mailto:<%= site.legal.provider.email %>"><%= site.legal.provider.email %></a></p>
+  </section>
+  <section aria-labelledby="hebergement">
+    <h2 id="hebergement">Hébergement</h2>
+    <p><strong><%= site.legal.host.provider %></strong><br>
+    <%= site.legal.host.company %><br>
+    <%= site.legal.host.address %><br>
+    <a href="<%= site.legal.host.url %>" target="_blank" rel="noopener"><%= site.legal.host.url %></a></p>
+  </section>
+  <section aria-labelledby="pi">
+    <h2 id="pi">Propriété intellectuelle</h2>
+    <p>Les contenus présents sur ce site sont la propriété de <%= site.brand %>, sauf mention contraire. Toute reproduction sans autorisation est interdite.</p>
+  </section>
+  <section aria-labelledby="donnees">
+    <h2 id="donnees">Données personnelles</h2>
+    <p>Ce site ne collecte pas de données personnelles hors contact direct (email, réseaux sociaux). Aucun cookie de suivi n’est déposé.</p>
+  </section>
+  <p><a href="./">Retour à l’accueil</a></p>
+</main>
+<%- include('../partials/footer') %>

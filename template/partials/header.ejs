@@ -1,0 +1,11 @@
+<header class="container">
+  <h1><a class="brand" href="./"><%= site.brand %></a></h1>
+  <nav>
+    <a href="./">Accueil</a>
+    <a href="contact">Contact</a>
+    <a href="mentions">Mentions légales</a>
+    <% if (site.instagram) { %>
+      <a href="<%= site.instagram %>" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
+    <% } %>
+  </nav>
+</header>

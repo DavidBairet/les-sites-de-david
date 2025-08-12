@@ -1,0 +1,8 @@
+<%- include('../partials/head', { page: { title: 'Contact' } }) %>
+<%- include('../partials/header') %>
+<main class="container">
+  <h1>Contact</h1>
+  <p>Écris-nous : <a href="mailto:<%= site.contact.email %>"><%= site.contact.email %></a></p>
+  <p>Téléphone : <a href="tel:<%= site.contact.phone %>"><%= site.contact.phone %></a></p>
+</main>
+<%- include('../partials/footer') %>
