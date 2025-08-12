@@ -9,15 +9,24 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.join(__dirname, '..');
 
-const TEMPLATE = path.join(root, 'template');
-const CLIENTS = path.join(root, 'clients');
-const DIST = path.join(root, 'dist');
+// Résolution souple des dossiers (au cas où tu aurais "modèle"/"publique")
+function resolveDir(...names) {
+  for (const n of names) {
+    const p = path.join(root, n);
+    if (fs.existsSync(p)) return p;
+  }
+  return path.join(root, names[0]);
+}
+
+const TEMPLATE = resolveDir('template', 'modèle');
+const CLIENTS  = resolveDir('clients', 'client');
+const DIST     = resolveDir('dist');
+const PUBLIC_DIR = resolveDir('public', 'publique');
+
 // Détecte si on est en CI GitHub (Pages de projet) et calcule le préfixe d'URL
-const ghParts = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/') : null;
-// ex: ['DavidBairet', 'les-sites-de-david']
+const ghParts = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/') : null; // ['DavidBairet','les-sites-de-david']
 const repoSlug = ghParts ? ghParts[1] : '';
-const pathPrefix = repoSlug ? `/${repoSlug}` : ''; 
-// → en local: ''   en CI: '/les-sites-de-david'
+const pathPrefix = repoSlug ? `/${repoSlug}` : ''; // en local: '' ; en CI: '/les-sites-de-david'
 
 function renderPage(templatePath, data, outFile) {
   const tpl = fs.readFileSync(templatePath, 'utf8');
@@ -26,23 +35,28 @@ function renderPage(templatePath, data, outFile) {
 }
 
 function copySharedAssets(dest) {
-  fs.copySync(path.join(TEMPLATE, 'styles'), path.join(dest, 'template/styles'));
-  fs.copySync(path.join(TEMPLATE, 'assets'), path.join(dest, 'template/assets'));
+  // Copie les assets partagés dans le répertoire du client
+  const tplStyles = path.join(TEMPLATE, 'styles');
+  const tplAssets = path.join(TEMPLATE, 'assets');
+  if (fs.existsSync(tplStyles)) fs.copySync(tplStyles, path.join(dest, 'template/styles'));
+  if (fs.existsSync(tplAssets)) fs.copySync(tplAssets, path.join(dest, 'template/assets'));
 }
 
 async function buildClient(dir) {
   const site = fs.readJsonSync(path.join(dir, 'site.json'));
- const basePath = `${pathPrefix}/${slug}`; 
-// ex: '/les-sites-de-david/sand-encre' en CI, '/sand-encre' en local dev-server
-  const out = path.join(DIST, slug);
-  const basePath = `/${slug}`;
+  const slug = site.slug;                          // ✅ slug défini
+  const out  = path.join(DIST, slug);
+  const basePath = `${pathPrefix}/${slug}`;        // ✅ bon basePath en CI et en local
 
+  // assets client → dist/clients/<slug>/assets
   const clientAssets = path.join(dir, 'assets');
   if (fs.existsSync(clientAssets)) {
     await fs.copy(clientAssets, path.join(out, 'clients', slug, 'assets'));
   }
+
   copySharedAssets(out);
 
+  // Rendre toutes les pages ejs
   const pages = glob.sync('template/pages/*.ejs', { cwd: root, absolute: true });
   for (const page of pages) {
     const name = path.basename(page, '.ejs');
@@ -71,18 +85,39 @@ ${urls.map(u=>`  <url><loc>${siteBase}${u}</loc></url>`).join('\n')}
 }
 
 async function copyPublic() {
-  const src = path.join(root, 'public');
-  if (fs.existsSync(src)) await fs.copy(src, DIST);
+  if (PUBLIC_DIR && fs.existsSync(PUBLIC_DIR)) {
+    await fs.copy(PUBLIC_DIR, DIST);
+  }
 }
 
 async function main() {
   await fs.emptyDir(DIST);
-  const dirs = (await fs.readdir(CLIENTS)).map(d => path.join(CLIENTS, d)).filter(p => fs.statSync(p).isDirectory());
+
+  const dirs = (await fs.readdir(CLIENTS))
+    .map(d => path.join(CLIENTS, d))
+    .filter(p => fs.statSync(p).isDirectory());
+
   for (const d of dirs) await buildClient(d);
 
-  // Hub index
+  // Hub index (CSS inline minimal pour éviter des chemins compliqués)
   const list = dirs.map(p => path.basename(p));
-  const hub = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sites clients</title><link rel="stylesheet" href="template/styles/main.css"></head><body class="container"><h1>Sites clients</h1><ul>${list.map(slug=>`<li><a href="/${slug}/">${slug}</a></li>`).join('')}</ul></body></html>`;
+  const hub = `<!doctype html><html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sites clients</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Roboto;margin:0;background:#0f0f12;color:#eaeaea}
+  .container{max-width:960px;margin:auto;padding:24px}
+  a{color:#eaeaea;text-decoration:none}
+  li{margin:8px 0}
+</style>
+</head><body>
+<div class="container">
+  <h1>Sites clients</h1>
+  <ul>
+    ${list.map(slug=>`<li><a href="${pathPrefix}/${slug}/">${slug}</a></li>`).join('')}
+  </ul>
+</div>
+</body></html>`;
   await fs.outputFile(path.join(DIST, 'index.html'), minifyHtml(hub));
 
   await copyPublic();
