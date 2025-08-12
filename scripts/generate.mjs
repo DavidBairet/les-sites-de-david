@@ -12,6 +12,12 @@ const root = path.join(__dirname, '..');
 const TEMPLATE = path.join(root, 'template');
 const CLIENTS = path.join(root, 'clients');
 const DIST = path.join(root, 'dist');
+// Détecte si on est en CI GitHub (Pages de projet) et calcule le préfixe d'URL
+const ghParts = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/') : null;
+// ex: ['DavidBairet', 'les-sites-de-david']
+const repoSlug = ghParts ? ghParts[1] : '';
+const pathPrefix = repoSlug ? `/${repoSlug}` : ''; 
+// → en local: ''   en CI: '/les-sites-de-david'
 
 function renderPage(templatePath, data, outFile) {
   const tpl = fs.readFileSync(templatePath, 'utf8');
@@ -26,7 +32,8 @@ function copySharedAssets(dest) {
 
 async function buildClient(dir) {
   const site = fs.readJsonSync(path.join(dir, 'site.json'));
-  const slug = site.slug;
+ const basePath = `${pathPrefix}/${slug}`; 
+// ex: '/les-sites-de-david/sand-encre' en CI, '/sand-encre' en local dev-server
   const out = path.join(DIST, slug);
   const basePath = `/${slug}`;
 
@@ -45,6 +52,11 @@ async function buildClient(dir) {
 }
 
 async function generateSitemap() {
+  const gh = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/') : null;
+  const owner = gh ? gh[0] : 'DavidBairet';
+  const repo  = gh ? gh[1] : '';
+  const siteBase = `https://${owner}.github.io${repo ? `/${repo}` : ''}`;
+
   const clients = (await fs.readdir(CLIENTS)).filter(d => fs.statSync(path.join(CLIENTS, d)).isDirectory());
   let urls = [];
   for (const slug of clients) {
@@ -53,7 +65,7 @@ async function generateSitemap() {
   }
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(u=>`  <url><loc>https://USER.github.io${u}</loc></url>`).join('\n')}
+${urls.map(u=>`  <url><loc>${siteBase}${u}</loc></url>`).join('\n')}
 </urlset>`;
   await fs.outputFile(path.join(DIST, 'sitemap.xml'), xml);
 }
