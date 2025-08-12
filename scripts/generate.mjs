@@ -1,8 +1,9 @@
+// scripts/generate.mjs
 import fs from 'fs-extra';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import ejs from 'ejs';
-import glob from 'glob';
+import { globSync } from 'glob';
 import { minifyHtml } from './utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,15 +19,15 @@ function resolveDir(...names) {
   return path.join(root, names[0]);
 }
 
-const TEMPLATE = resolveDir('template', 'modèle');
-const CLIENTS  = resolveDir('clients', 'client');
-const DIST     = resolveDir('dist');
+const TEMPLATE   = resolveDir('template', 'modèle');
+const CLIENTS    = resolveDir('clients', 'client');
+const DIST       = resolveDir('dist');
 const PUBLIC_DIR = resolveDir('public', 'publique');
 
 // Détecte si on est en CI GitHub (Pages de projet) et calcule le préfixe d'URL
-const ghParts = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/') : null; // ['DavidBairet','les-sites-de-david']
-const repoSlug = ghParts ? ghParts[1] : '';
-const pathPrefix = repoSlug ? `/${repoSlug}` : ''; // en local: '' ; en CI: '/les-sites-de-david'
+const ghParts   = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/') : null;
+const repoSlug  = ghParts ? ghParts[1] : '';
+const pathPrefix = repoSlug ? `/${repoSlug}` : ''; // local: '' ; CI: '/les-sites-de-david'
 
 function renderPage(templatePath, data, outFile) {
   const tpl = fs.readFileSync(templatePath, 'utf8');
@@ -35,32 +36,43 @@ function renderPage(templatePath, data, outFile) {
 }
 
 function copySharedAssets(dest) {
-  // Copie les assets partagés dans le répertoire du client
   const tplStyles = path.join(TEMPLATE, 'styles');
   const tplAssets = path.join(TEMPLATE, 'assets');
-  if (fs.existsSync(tplStyles)) fs.copySync(tplStyles, path.join(dest, 'template/styles'));
-  if (fs.existsSync(tplAssets)) fs.copySync(tplAssets, path.join(dest, 'template/assets'));
+  if (fs.existsSync(tplStyles)) fs.copySync(tplStyles, path.join(dest, 'template', 'styles'));
+  if (fs.existsSync(tplAssets)) fs.copySync(tplAssets, path.join(dest, 'template', 'assets'));
 }
 
 async function buildClient(dir) {
-  const site = fs.readJsonSync(path.join(dir, 'site.json'));
-  const slug = site.slug;                          // ✅ slug défini
-  const out  = path.join(DIST, slug);
-  const basePath = `${pathPrefix}/${slug}`;        // ✅ bon basePath en CI et en local
+  const sitePath = path.join(dir, 'site.json');
+  if (!fs.existsSync(sitePath)) {
+    console.warn(`[warn] Pas de site.json dans ${dir} — ignoré.`);
+    return;
+  }
 
-  // assets client → dist/clients/<slug>/assets
+  const site = fs.readJsonSync(sitePath);
+  const slug = site.slug;
+  if (!slug) throw new Error(`site.slug manquant pour ${dir}`);
+
+  const out  = path.join(DIST, slug);
+  const basePath = `${pathPrefix}/${slug}`;
+
+  // assets client → dist/<slug>/assets
   const clientAssets = path.join(dir, 'assets');
   if (fs.existsSync(clientAssets)) {
-    await fs.copy(clientAssets, path.join(out, 'clients', slug, 'assets'));
+    await fs.copy(clientAssets, path.join(out, 'assets'));
   }
 
   copySharedAssets(out);
 
-  // Rendre toutes les pages ejs
-  const pages = glob.sync(path.join(TEMPLATE, 'pages', '*.ejs'), { absolute: true });
+  // Rendre toutes les pages ejs depuis template/pages/*.ejs
+  const pages = globSync(path.join(TEMPLATE, 'pages', '*.ejs'), { absolute: true });
   for (const page of pages) {
     const name = path.basename(page, '.ejs');
-    const destFile = path.join(out, name === 'index' ? 'index.html' : name, name === 'index' ? '' : 'index.html');
+    const destFile =
+      name === 'index'
+        ? path.join(out, 'index.html')
+        : path.join(out, name, 'index.html');
+
     renderPage(page, { site, basePath, page: { title: name } }, destFile);
   }
 }
@@ -72,11 +84,13 @@ async function generateSitemap() {
   const siteBase = `https://${owner}.github.io${repo ? `/${repo}` : ''}`;
 
   const clients = (await fs.readdir(CLIENTS)).filter(d => fs.statSync(path.join(CLIENTS, d)).isDirectory());
-  let urls = [];
+  const urls = [];
   for (const slug of clients) {
-    const pages = ['/', '/contact/', '/mentions/'];
-    urls.push(...pages.map(p => `/${slug}${p}`));
+    for (const p of ['/', '/contact/', '/mentions/']) {
+      urls.push(`/${slug}${p}`);
+    }
   }
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map(u=>`  <url><loc>${siteBase}${u}</loc></url>`).join('\n')}
@@ -99,7 +113,7 @@ async function main() {
 
   for (const d of dirs) await buildClient(d);
 
-  // Hub index (CSS inline minimal pour éviter des chemins compliqués)
+  // Hub index
   const list = dirs.map(p => path.basename(p));
   const hub = `<!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
