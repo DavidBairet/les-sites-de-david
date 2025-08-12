@@ -10,7 +10,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const root = path.join(__dirname, '..');
 
-// Résolution souple des dossiers (au cas où tu aurais "modèle"/"publique")
 function resolveDir(...names) {
   for (const n of names) {
     const p = path.join(root, n);
@@ -24,15 +23,19 @@ const CLIENTS    = resolveDir('clients', 'client');
 const DIST       = resolveDir('dist');
 const PUBLIC_DIR = resolveDir('public', 'publique');
 
-// Détecte si on est en CI GitHub (Pages de projet) et calcule le préfixe d'URL
-const ghParts   = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/') : null;
-const repoSlug  = ghParts ? ghParts[1] : '';
-const pathPrefix = repoSlug ? `/${repoSlug}` : ''; // local: '' ; CI: '/les-sites-de-david'
+const ghParts    = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/') : null;
+const repoSlug   = ghParts ? ghParts[1] : '';
+const pathPrefix = repoSlug ? `/${repoSlug}` : '';
 
-function renderPage(templatePath, data, outFile) {
+// ⬇️ CHANGEMENT: renderPage devient async + filename + await minify
+async function renderPage(templatePath, data, outFile) {
   const tpl = fs.readFileSync(templatePath, 'utf8');
-  const html = ejs.render(tpl, data, { root: TEMPLATE });
-  fs.outputFileSync(outFile, minifyHtml(html));
+  const html = ejs.render(tpl, data, {
+    root: TEMPLATE,
+    filename: templatePath, // indispensable pour les includes relatifs
+  });
+  const minified = await minifyHtml(html);
+  await fs.outputFile(outFile, minified);
 }
 
 function copySharedAssets(dest) {
@@ -56,7 +59,6 @@ async function buildClient(dir) {
   const out  = path.join(DIST, slug);
   const basePath = `${pathPrefix}/${slug}`;
 
-  // assets client → dist/<slug>/assets
   const clientAssets = path.join(dir, 'assets');
   if (fs.existsSync(clientAssets)) {
     await fs.copy(clientAssets, path.join(out, 'assets'));
@@ -64,16 +66,15 @@ async function buildClient(dir) {
 
   copySharedAssets(out);
 
-  // Rendre toutes les pages ejs depuis template/pages/*.ejs
+  // ⬇️ CHANGEMENT: on await renderPage
   const pages = globSync(path.join(TEMPLATE, 'pages', '*.ejs'), { absolute: true });
   for (const page of pages) {
     const name = path.basename(page, '.ejs');
-    const destFile =
-      name === 'index'
-        ? path.join(out, 'index.html')
-        : path.join(out, name, 'index.html');
+    const destFile = name === 'index'
+      ? path.join(out, 'index.html')
+      : path.join(out, name, 'index.html');
 
-    renderPage(page, { site, basePath, page: { title: name } }, destFile);
+    await renderPage(page, { site, basePath, page: { title: name } }, destFile);
   }
 }
 
@@ -113,7 +114,6 @@ async function main() {
 
   for (const d of dirs) await buildClient(d);
 
-  // Hub index
   const list = dirs.map(p => path.basename(p));
   const hub = `<!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -132,7 +132,8 @@ async function main() {
   </ul>
 </div>
 </body></html>`;
-  await fs.outputFile(path.join(DIST, 'index.html'), minifyHtml(hub));
+  const hubMin = await minifyHtml(hub); // ⬅️ aussi async
+  await fs.outputFile(path.join(DIST, 'index.html'), hubMin);
 
   await copyPublic();
   await generateSitemap();
