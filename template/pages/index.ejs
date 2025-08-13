@@ -1,11 +1,14 @@
 <%- include('../partials/head', { page: { title: 'Accueil' } }) %>
 <%- include('../partials/header') %>
+
 <header class="header-image">
   <div class="overlay" aria-hidden="true"></div>
   <h1><%= site.hero.heading %></h1>
 </header>
+
 <main class="container">
   <p><%= site.hero.subheading %></p>
-  <img src="<%= site.hero.image || 'template/assets/placeholder.svg' %>" alt="Tatouages <%= site.brand %>" />
+  <img src="<%= site.hero.image || 'assets/placeholder.svg' %>" alt="Tatouages <%= site.brand %>" />
 </main>
+
 <%- include('../partials/footer') %>

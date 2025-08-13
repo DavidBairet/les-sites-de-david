@@ -1,15 +1,16 @@
 // scripts/generate.mjs
-import fs from 'fs-extra';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import ejs from 'ejs';
-import { globSync } from 'glob';
-import { minifyHtml } from './utils.mjs';
+import fs from "fs-extra";
+import path from "path";
+import { fileURLToPath } from "url";
+import ejs from "ejs";
+import glob from "glob";
+import { minifyHtml } from "./utils.mjs"; // garde si tu l'as déjà
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const root = path.join(__dirname, '..');
+const root = path.join(__dirname, "..");
 
+// Résolution souple des dossiers (au cas où tu aies "modèle"/"publique")
 function resolveDir(...names) {
   for (const n of names) {
     const p = path.join(root, n);
@@ -18,126 +19,135 @@ function resolveDir(...names) {
   return path.join(root, names[0]);
 }
 
-const TEMPLATE   = resolveDir('template', 'modèle');
-const CLIENTS    = resolveDir('clients', 'client');
-const DIST       = resolveDir('dist');
-const PUBLIC_DIR = resolveDir('public', 'publique');
+const TEMPLATE   = resolveDir("template", "modèle");
+const CLIENTS    = resolveDir("clients", "client");
+const DIST       = resolveDir("dist");
+const PUBLIC_DIR = resolveDir("public", "publique");
 
-const ghParts    = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/') : null;
-const repoSlug   = ghParts ? ghParts[1] : '';
-const pathPrefix = repoSlug ? `/${repoSlug}` : '';
+// --- Base path pour GitHub Pages (projet) ---
+// Priorité à PUBLIC_URL si défini (ex: "https://davidbairet.github.io/les-sites-de-david/")
+const repoName   = process.env.GITHUB_REPOSITORY?.split("/")[1] ?? "";
+const CI_BASE    = repoName ? `/${repoName}/` : "/";
+const basePath   = process.env.PUBLIC_URL?.endsWith("/")
+  ? process.env.PUBLIC_URL
+  : (process.env.PUBLIC_URL ? process.env.PUBLIC_URL + "/" : (process.env.GITHUB_ACTIONS ? CI_BASE : "/"));
 
-// ⬇️ CHANGEMENT: renderPage devient async + filename + await minify
-async function renderPage(templatePath, data, outFile) {
-  const tpl = fs.readFileSync(templatePath, 'utf8');
-  const html = ejs.render(tpl, data, {
-    root: TEMPLATE,
-    filename: templatePath, // indispensable pour les includes relatifs
-  });
-  const minified = await minifyHtml(html);
-  await fs.outputFile(outFile, minified);
-}
-
-function copySharedAssets(dest) {
-  const tplStyles = path.join(TEMPLATE, 'styles');
-  const tplAssets = path.join(TEMPLATE, 'assets');
-  if (fs.existsSync(tplStyles)) fs.copySync(tplStyles, path.join(dest, 'template', 'styles'));
-  if (fs.existsSync(tplAssets)) fs.copySync(tplAssets, path.join(dest, 'template', 'assets'));
-}
-
-async function buildClient(dir) {
-  const sitePath = path.join(dir, 'site.json');
-  if (!fs.existsSync(sitePath)) {
-    console.warn(`[warn] Pas de site.json dans ${dir} — ignoré.`);
-    return;
-  }
-
-  const site = fs.readJsonSync(sitePath);
-  const slug = site.slug;
-  if (!slug) throw new Error(`site.slug manquant pour ${dir}`);
-
-  const out  = path.join(DIST, slug);
-  const basePath = `${pathPrefix}/${slug}`;
-
-  const clientAssets = path.join(dir, 'assets');
-  if (fs.existsSync(clientAssets)) {
-    await fs.copy(clientAssets, path.join(out, 'assets'));
-  }
-
-  copySharedAssets(out);
-
-  // ⬇️ CHANGEMENT: on await renderPage
-  const pages = globSync(path.join(TEMPLATE, 'pages', '*.ejs'), { absolute: true });
-  for (const page of pages) {
-    const name = path.basename(page, '.ejs');
-    const destFile = name === 'index'
-      ? path.join(out, 'index.html')
-      : path.join(out, name, 'index.html');
-
-    await renderPage(page, { site, basePath, page: { title: name } }, destFile);
-  }
-}
-
-async function generateSitemap() {
-  const gh = process.env.GITHUB_REPOSITORY ? process.env.GITHUB_REPOSITORY.split('/') : null;
-  const owner = gh ? gh[0] : 'DavidBairet';
-  const repo  = gh ? gh[1] : '';
-  const siteBase = `https://${owner}.github.io${repo ? `/${repo}` : ''}`;
-
-  const clients = (await fs.readdir(CLIENTS)).filter(d => fs.statSync(path.join(CLIENTS, d)).isDirectory());
-  const urls = [];
-  for (const slug of clients) {
-    for (const p of ['/', '/contact/', '/mentions/']) {
-      urls.push(`/${slug}${p}`);
-    }
-  }
-
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(u=>`  <url><loc>${siteBase}${u}</loc></url>`).join('\n')}
-</urlset>`;
-  await fs.outputFile(path.join(DIST, 'sitemap.xml'), xml);
-}
-
-async function copyPublic() {
-  if (PUBLIC_DIR && fs.existsSync(PUBLIC_DIR)) {
-    await fs.copy(PUBLIC_DIR, DIST);
-  }
-}
+// Utilitaires
+const readJson = (p) => JSON.parse(fs.readFileSync(p, "utf8"));
+const writeHtml = async (outPath, html) => {
+  const finalHtml = typeof minifyHtml === "function" ? minifyHtml(html) : html;
+  await fs.outputFile(outPath, finalHtml, "utf8");
+};
 
 async function main() {
-  await fs.emptyDir(DIST);
+  // Clean + ensure dist
+  await fs.remove(DIST);
+  await fs.ensureDir(DIST);
 
-  const dirs = (await fs.readdir(CLIENTS))
-    .map(d => path.join(CLIENTS, d))
-    .filter(p => fs.statSync(p).isDirectory());
+  // Copie des assets publics s'ils existent
+  if (await fs.pathExists(PUBLIC_DIR)) {
+    await fs.copy(PUBLIC_DIR, DIST);
+  }
 
-  for (const d of dirs) await buildClient(d);
+  // Lister les clients
+  const clientDirs = (await fs.readdir(CLIENTS))
+    .map((d) => path.join(CLIENTS, d))
+    .filter((p) => fs.lstatSync(p).isDirectory());
 
-  const list = dirs.map(p => path.basename(p));
-  const hub = `<!doctype html><html lang="fr"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sites clients</title>
-<style>
-  body{font-family:system-ui,Segoe UI,Roboto;margin:0;background:#0f0f12;color:#eaeaea}
-  .container{max-width:960px;margin:auto;padding:24px}
-  a{color:#eaeaea;text-decoration:none}
-  li{margin:8px 0}
-</style>
-</head><body>
-<div class="container">
-  <h1>Sites clients</h1>
-  <ul>
-    ${list.map(slug=>`<li><a href="${pathPrefix}/${slug}/">${slug}</a></li>`).join('')}
-  </ul>
-</div>
-</body></html>`;
-  const hubMin = await minifyHtml(hub); // ⬅️ aussi async
-  await fs.outputFile(path.join(DIST, 'index.html'), hubMin);
+  const builtClients = [];
 
-  await copyPublic();
-  await generateSitemap();
-  console.log('Build OK → dist/');
+  for (const cdir of clientDirs) {
+    const siteJsonPath = path.join(cdir, "site.json");
+    if (!(await fs.pathExists(siteJsonPath))) continue;
+
+    const site = readJson(siteJsonPath);
+    if (site.build === false) continue;
+
+    const slug = site.slug || path.basename(cdir);
+    const outDir = path.join(DIST, "clients", slug);
+
+    // Copie d'éventuels assets du template
+    const templateAssets = path.join(TEMPLATE, "assets");
+    if (await fs.pathExists(templateAssets)) {
+      await fs.copy(templateAssets, path.join(outDir, "assets"));
+    }
+
+    // Rendu des pages
+    const pages = site.pages?.length ? site.pages : [{ path: "index", title: "Accueil" }];
+
+    for (const page of pages) {
+      const pageName = page.path.replace(/\.html?$/i, "");
+      // On cherche un template spécifique, sinon fallback sur "page.ejs", sinon "index.ejs"
+      const candidates = [
+        path.join(TEMPLATE, `${pageName}.ejs`),
+        path.join(TEMPLATE, "page.ejs"),
+        path.join(TEMPLATE, "index.ejs"),
+      ];
+      const templatePath = candidates.find((p) => fs.existsSync(p));
+      if (!templatePath) {
+        // Template absent : génère une page ultra simple pour ne pas casser le build
+        const html = `<!doctype html><meta charset="utf-8"><title>${site.title ?? "Site"}</title>
+<main style="font-family:system-ui;padding:2rem;color:#eee;background:#111">
+  <h1>${site.title ?? "Site"}</h1>
+  <p>Page <strong>${pageName}</strong> (template par défaut)</p>
+</main>`;
+        await writeHtml(path.join(outDir, `${pageName}.html`), html);
+        continue;
+      }
+
+      // Données envoyées au template
+      const data = {
+        site,
+        page,
+        basePath,        // <- IMPORTANT pour Pages
+        slug,
+        clientOutDir: `clients/${slug}/`,
+        isCI: !!process.env.GITHUB_ACTIONS,
+      };
+
+      // Rendu EJS avec filename pour includes relatifs ✅
+      const tpl = await fs.readFile(templatePath, "utf8");
+      const html = ejs.render(tpl, data, { filename: templatePath });
+
+      await writeHtml(path.join(outDir, `${pageName}.html`), html);
+    }
+
+    builtClients.push(slug);
+  }
+
+  // --- Index racine & 404 ---
+  // Si on a construit au moins un client, on redirige la racine vers le premier
+  if (builtClients.length > 0) {
+    const first = builtClients[0];
+    const indexHtml = `<!doctype html>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="0; url=clients/${first}/">
+<title>Redirection…</title>
+<a href="clients/${first}/">Aller au site</a>`;
+    await writeHtml(path.join(DIST, "index.html"), indexHtml);
+  } else {
+    const indexHtml = `<!doctype html>
+<meta charset="utf-8"><title>Aucun client</title>
+<main style="font-family:system-ui;padding:2rem">
+  <h1>Aucun client construit</h1>
+  <p>Ajoute un dossier dans <code>clients/</code> avec un <code>site.json</code> et <code>"build": true</code>.</p>
+</main>`;
+    await writeHtml(path.join(DIST, "index.html"), indexHtml);
+  }
+
+  const notFound = `<!doctype html>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page introuvable</title>
+<main style="font-family:system-ui;padding:2rem">
+  <h1>Oups, page introuvable</h1>
+  <p><a href="./">← Retour à l’accueil</a></p>
+</main>`;
+  await writeHtml(path.join(DIST, "404.html"), notFound);
+
+  console.log("Build OK ✅", { builtClients, basePath });
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
