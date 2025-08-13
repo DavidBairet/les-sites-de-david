@@ -29,10 +29,20 @@ jobs:
       - name: Build project
         run: npm run build
 
+      # DEBUG : montre ce que le build a réellement produit
+      - name: Show dist tree
+        run: |
+          echo "PWD=$(pwd)"
+          if [ -d dist ]; then
+            find dist -maxdepth 3 -print
+          else
+            echo "dist is missing"; exit 1
+          fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/clients/_starter
+          path: dist
 
   deploy:
     needs: build
