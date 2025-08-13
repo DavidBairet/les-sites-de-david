@@ -12,13 +12,7 @@
   <% if (site.description) { %>
     <meta name="description" content="<%= site.description %>" />
   <% } %>
-  <% if (site.seo?.keywords) { %>
-    <meta name="keywords" content="<%= site.seo.keywords.join(', ') %>" />
-  <% } %>
-  <% if (site.seo?.ogImage) { %>
-    <meta property="og:image" content="<%= site.seo.ogImage %>" />
-  <% } %>
 
-  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="stylesheet" href="styles/main.css" />
 </head>
 <body>
