@@ -1,6 +1,15 @@
 <!doctype html>
 <html lang="<%= site.lang || 'fr' %>">
 <head>
+  <style>
+:root{
+  --brand: <%= site.theme?.brand || '#e11d48' %>;
+  --bg:    <%= site.theme?.bg    || '#0c0c0d' %>;
+  --panel: <%= site.theme?.panel || '#141416' %>;
+  --text:  <%= site.theme?.text  || '#f3f3f3' %>;
+  --muted: <%= site.theme?.muted || '#a1a1aa' %>;
+}
+</style>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title><%= page && page.title ? page.title + ' – ' + site.brand : site.title %></title>

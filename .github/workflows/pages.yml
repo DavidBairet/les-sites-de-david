@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -19,11 +19,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
+          cache: npm
+
+      # Installe en priorité via npm ci (si package-lock.json), sinon npm i
+      - run: npm ci || npm i
+
       - run: npm run build
+
+      # Configure Pages (recommandé par GitHub)
+      - uses: actions/configure-pages@v5
+
+      # Archive le dossier dist pour le déploiement
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
