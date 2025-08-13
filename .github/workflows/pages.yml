@@ -10,6 +10,10 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,7 +33,7 @@ jobs:
       - name: Build project
         run: npm run build
 
-      # DEBUG : montre ce que le build a réellement produit
+      # DEBUG : voir la sortie réelle du build
       - name: Show dist tree
         run: |
           echo "PWD=$(pwd)"
@@ -42,7 +46,10 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          # Si tu déploies TOUT le build (avec un index à la racine) :
           path: dist
+          # Sinon, commente la ligne ci-dessus et utilise un client précis :
+          # path: dist/clients/demo-bidon
 
   deploy:
     needs: build

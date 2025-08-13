@@ -1,0 +1,103 @@
+﻿{
+  "slug": "demo-bidon",
+  "title": "Client Démo",
+  "brand": "Client Démo",
+  "description": "Site vitrine de test pour vérifier le déploiement GitHub Pages.",
+  "lang": "fr",
+  "listed": true,
+  "build": true,
+
+  "theme": {
+    "brand": "#e11d48",
+    "bg": "#0c0c0d",
+    "panel": "#141416",
+    "text": "#f3f3f3",
+    "muted": "#a1a1aa"
+  },
+
+  "hero": {
+    "heading": "Créations sur-mesure",
+    "subheading": "Galerie, tarifs et contact en un clic.",
+    "image": "assets/hero.png"
+  },
+
+  "contact": {
+    "email": "contact@exemple.com",
+    "phone": "+33 6 12 34 56 78",
+    "city": "Votre ville"
+  },
+
+  "socials": {
+    "instagram": "",
+    "facebook": "",
+    "tiktok": ""
+  },
+
+  "legal": {
+    "editor": {
+      "entity": "Dupond",
+      "representative": "Nom Prénom",
+      "status": "Entrepreneur individuel (Tatouage)",
+      "siret": "A completer",
+      "email": "contact@exemple.com"
+    },
+    "provider": {
+      "entity": "Les Sites de David – David Bairet",
+      "siret": "A completer",
+      "email": "contact@lessitesdedavid.fr"
+    },
+    "host": {
+      "provider": "GitHub Pages",
+      "company": "GitHub, Inc.",
+      "address": "88 Colin P Kelly Jr St, San Francisco, CA 94107, USA",
+      "url": "https://pages.github.com/"
+    }
+  },
+
+  "seo": {
+    "keywords": ["tatouage", "fineline", "dotwork", "réalisme", "Votre ville"],
+    "ogImage": "assets/og.png",
+    "geo": { "lat": 0, "lng": 0 }
+  },
+
+  "sections": {
+    "styles": true,
+    "artists": true,
+    "gallery": true,
+    "contact": true
+  },
+
+  "styles": [
+    { "name": "Fineline", "desc": "Lignes délicates, minimalisme élégant." },
+    { "name": "Blackwork", "desc": "Noirs profonds, contrastes puissants." },
+    { "name": "Réalisme", "desc": "Détails précis, effets photographiques." },
+    { "name": "Neo-trad", "desc": "Couleurs vives, motifs iconiques." }
+  ],
+
+  "artists": [
+    {
+      "name": "Alex",
+      "specialties": "Fineline • Blackwork",
+      "image": "assets/img/artist-alex.png",
+      "profile": "artist.html"
+    },
+    {
+      "name": "Maya",
+      "specialties": "Neo-trad • Couleur",
+      "image": "assets/img/artist-maya.png",
+      "profile": "artist.html"
+    }
+  ],
+
+  "gallery": [
+    "assets/img/tattoo1.png",
+    "assets/img/tattoo2.png",
+    "assets/img/tattoo3.png"
+  ],
+
+  "pages": [
+    { "path": "index",    "title": "Accueil" },
+    { "path": "contact",  "title": "Contact" },
+    { "path": "mentions", "title": "Mentions légales" }
+  ]
+}
