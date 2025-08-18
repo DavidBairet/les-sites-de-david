@@ -1,18 +1,11 @@
-<!doctype html>
-<html lang="<%= site.lang || 'fr' %>">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title><%= (page?.title ? page.title + ' – ' : '') + (site.title || site.brand || 'Site') %></title>
-
-  <% if (basePath && basePath !== '/') { %>
-    <base href="<%= basePath %>">
-  <% } %>
-
-  <% if (site.description) { %>
-    <meta name="description" content="<%= site.description %>" />
-  <% } %>
-
-  <link rel="stylesheet" href="styles/main.css" />
+  <title>
+    <%= (typeof title !== 'undefined' ? title
+        : (typeof page !== 'undefined' && page && page.title) )
+        || (site && site.title) || 'Site' %>
+  </title>
+  <link rel="stylesheet" href="<%= clientBase %>styles/main.css" />
+  <link rel="icon" href="<%= clientBase %>assets/favicon.ico" />
 </head>
-<body>

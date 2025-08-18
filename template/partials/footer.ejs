@@ -1,26 +1,3 @@
-<footer class="footer" role="contentinfo">
-  <div class="container">
-    <small>
-      © <time datetime="<%= new Date().getFullYear() %>"><%= new Date().getFullYear() %></time>
-      <%= site.brand %>. Tous droits réservés.
-    </small>
-
-    <nav class="footer-nav" aria-label="Liens utiles">
-      <a href="index.html">Accueil</a>
-      <a href="contact.html">Contact</a>
-      <a href="mentions.html">Mentions légales</a>
-    </nav>
-
-    <div class="footer-meta">
-      <% if (site.contact?.email) { %>
-        <a href="mailto:<%= site.contact.email %>"><%= site.contact.email %></a>
-      <% } %>
-      <% if (site.contact?.phone) { %>
-        <a href="tel:<%= (site.contact.phone || '').replace(/\s+/g,'') %>"><%= site.contact.phone %></a>
-      <% } %>
-      <small>— Site par <a href="https://lessitesdedavid.fr" rel="noopener noreferrer">Les Sites de David</a></small>
-    </div>
-  </div>
+<footer class="container">
+  <p>&copy; <%= new Date().getFullYear() %> <%= site.name || 'Studio' %></p>
 </footer>
-</body>
-</html>

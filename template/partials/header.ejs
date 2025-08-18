@@ -1,11 +1,8 @@
 <header class="container">
-  <h1><a class="brand" href="./"><%= site.brand %></a></h1>
+  <a href="<%= clientBase %>index.html" class="logo"><%= site.name || site.title || 'Accueil' %></a>
   <nav>
-    <a href="./">Accueil</a>
-    <a href="contact">Contact</a>
-    <a href="mentions">Mentions légales</a>
-    <% if (site.instagram) { %>
-      <a href="<%= site.instagram %>" target="_blank" rel="noopener" aria-label="Instagram">Instagram</a>
-    <% } %>
+    <a href="<%= clientBase %>index.html">Accueil</a>
+    <a href="<%= clientBase %>contact.html">Contact</a>
+    <a href="<%= clientBase %>mentions.html">Mentions légales</a>
   </nav>
 </header>

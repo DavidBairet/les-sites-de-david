@@ -1,16 +1,8 @@
 {
   "slug": "demo-bidon",
-  "title": "Client Démo",
-  "brand": "Client Démo",
-  "description": "Site de test pour vérifier le déploiement.",
-  "lang": "fr",
-  "build": true,
-  "hero": {
-    "heading": "Créations sur-mesure",
-    "subheading": "Galerie, tarifs et contact en un clic.",
-    "image": "assets/hero.png"
-  },
-  "pages": [
-    { "path": "index", "title": "Accueil" }
-  ]
+  "name": "Demo Bidon",
+  "title": "Studio Demo Bidon",
+  "description": "Un studio de tatouage fictif pour tester le générateur.",
+  "contact": { "email": "contact@demo-bidon.fr", "phone": "06 00 00 00 00" },
+  "pages": [ { "path": "index" }, { "path": "contact" }, { "path": "mentions" } ]
 }

@@ -1,36 +1,50 @@
-<%- include('../partials/head', { page: { title: 'Mentions légales' } }) %>
-<%- include('../partials/header') %>
-<header class="header-image"><div class="overlay" aria-hidden="true"></div><h1>Mentions légales</h1></header>
-<main class="container" id="legal">
-  <section aria-labelledby="editeur">
-    <h2 id="editeur">Éditeur du site</h2>
-    <p><strong>Nom / Dénomination :</strong> <%= site.legal.editor.entity %></p>
-    <p><strong>Représentant légal :</strong> <%= site.legal.editor.representative %></p>
-    <p><strong>Statut :</strong> <%= site.legal.editor.status %></p>
-    <p><strong>SIRET :</strong> <%= site.legal.editor.siret %></p>
-    <p><strong>Email :</strong> <a href="mailto:<%= site.legal.editor.email %>"><%= site.legal.editor.email %></a></p>
-  </section>
-  <section aria-labelledby="conception">
-    <h2 id="conception">Conception & développement</h2>
-    <p><strong><%= site.legal.provider.entity %></strong><br>
-    SIRET : <%= site.legal.provider.siret %><br>
-    <a href="mailto:<%= site.legal.provider.email %>"><%= site.legal.provider.email %></a></p>
-  </section>
-  <section aria-labelledby="hebergement">
-    <h2 id="hebergement">Hébergement</h2>
-    <p><strong><%= site.legal.host.provider %></strong><br>
-    <%= site.legal.host.company %><br>
-    <%= site.legal.host.address %><br>
-    <a href="<%= site.legal.host.url %>" target="_blank" rel="noopener"><%= site.legal.host.url %></a></p>
-  </section>
-  <section aria-labelledby="pi">
-    <h2 id="pi">Propriété intellectuelle</h2>
-    <p>Les contenus présents sur ce site sont la propriété de <%= site.brand %>, sauf mention contraire. Toute reproduction sans autorisation est interdite.</p>
-  </section>
-  <section aria-labelledby="donnees">
-    <h2 id="donnees">Données personnelles</h2>
-    <p>Ce site ne collecte pas de données personnelles hors contact direct (email, réseaux sociaux). Aucun cookie de suivi n’est déposé.</p>
-  </section>
-  <p><a href="./">Retour à l’accueil</a></p>
-</main>
-<%- include('../partials/footer') %>
+<!doctype html>
+<html lang="fr">
+  <%- include('partials/head', { title: 'Mentions légales', clientBase, site }) %>
+  <body>
+    <%- include('partials/header', { site, clientBase }) %>
+
+    <main class="container">
+      <h1>Mentions légales</h1>
+
+      <% const legal = site?.legal || {};
+         const editor = legal.editor || {};
+         const provider = legal.provider || {};
+         const host = legal.host || {}; %>
+
+      <section aria-labelledby="editeur">
+        <h2 id="editeur">Éditeur du site</h2>
+        <p><strong>Nom / Dénomination :</strong> <%= editor.entity || site?.name || site?.title || 'Studio' %></p>
+        <% if (editor.representative) { %>
+          <p><strong>Représentant légal :</strong> <%= editor.representative %></p>
+        <% } %>
+        <% if (editor.status) { %>
+          <p><strong>Statut :</strong> <%= editor.status %></p>
+        <% } %>
+        <% if (editor.siret) { %>
+          <p><strong>SIRET :</strong> <%= editor.siret %></p>
+        <% } %>
+        <% if (editor.email) { %>
+          <p><strong>Email :</strong> <a href="mailto:<%= editor.email %>"><%= editor.email %></a></p>
+        <% } %>
+      </section>
+
+      <section aria-labelledby="prestataire">
+        <h2 id="prestataire">Prestataire</h2>
+        <p><strong>Raison sociale :</strong> <%= provider.entity || '—' %></p>
+        <% if (provider.siret) { %><p><strong>SIRET :</strong> <%= provider.siret %></p><% } %>
+        <% if (provider.email) { %><p><strong>Email :</strong> <a href="mailto:<%= provider.email %>"><%= provider.email %></a></p><% } %>
+      </section>
+
+      <section aria-labelledby="hebergeur">
+        <h2 id="hebergeur">Hébergeur</h2>
+        <p><strong>Fournisseur :</strong> <%= host.provider || 'GitHub Pages' %></p>
+        <% if (host.company) { %><p><strong>Entreprise :</strong> <%= host.company %></p><% } %>
+        <% if (host.address) { %><p><strong>Adresse :</strong> <%= host.address %></p><% } %>
+        <% if (host.url) { %><p><strong>Site :</strong> <a href="<%= host.url %>"><%= host.url %></a></p><% } %>
+      </section>
+    </main>
+
+    <%- include('partials/footer', { site, clientBase }) %>
+  </body>
+</html>

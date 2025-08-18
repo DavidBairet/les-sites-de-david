@@ -1,8 +1,26 @@
-<%- include('../partials/head', { page: { title: 'Contact' } }) %>
-<%- include('../partials/header') %>
-<main class="container">
-  <h1>Contact</h1>
-  <p>Écris-nous : <a href="mailto:<%= site.contact.email %>"><%= site.contact.email %></a></p>
-  <p>Téléphone : <a href="tel:<%= site.contact.phone %>"><%= site.contact.phone %></a></p>
-</main>
-<%- include('../partials/footer') %>
+<!doctype html>
+<html lang="fr">
+<%- include('partials/head', { title: 'Mentions légales', clientBase, site }) %>
+  <body>
+    <%- include('partials/header', { site, clientBase }) %>
+    
+
+    <main class="container">
+      <h1>Contact</h1>
+
+      <% if (site?.contact?.email) { %>
+        <p>Écris-nous :
+          <a href="mailto:<%= site.contact.email %>"><%= site.contact.email %></a>
+        </p>
+      <% } %>
+
+      <% if (site?.contact?.phone) { %>
+        <p>Téléphone :
+          <a href="tel:<%= site.contact.phone.replace(/\s+/g,'') %>"><%= site.contact.phone %></a>
+        </p>
+      <% } %>
+    </main>
+
+    <%- include('partials/footer', { site, clientBase }) %>
+  </body>
+</html>

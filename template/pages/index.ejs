@@ -1,16 +1,16 @@
-<%- include('partials/head',   { page: { title: 'Accueil' } }) %>
-<%- include('partials/header') %>
-...
-<%- include('partials/footer') %>
+<!doctype html>
+<html lang="fr">
+  <%- include('partials/head', { title: 'Mentions légales', clientBase, site }) %>
+  <body>
+    <%- include('partials/header', { site, clientBase }) %>
 
-<header class="header-image">
-  <div class="overlay" aria-hidden="true"></div>
-  <h1><%= site.hero.heading %></h1>
-</header>
+    <main class="container">
+      <h1><%= site.title || 'Accueil' %></h1>
+      <p><%= site.description || '' %></p>
 
-<main class="container">
-  <p><%= site.hero.subheading %></p>
-  <img src="<%= site.hero.image || 'assets/placeholder.svg' %>" alt="Tatouages <%= site.brand %>" />
-</main>
+      <p><a href="<%= clientBase %>contact.html">Contact</a></p>
+    </main>
 
-<%- include('../partials/footer') %>
+    <%- include('partials/footer', { site, clientBase }) %>
+  </body>
+</html>
