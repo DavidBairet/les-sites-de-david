@@ -24,32 +24,27 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: 20
+          cache: npm
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Build project
-        run: npm run build
-
-      # DEBUG : voir la sortie réelle du build
-      - name: Show dist tree
         run: |
-          echo "PWD=$(pwd)"
-          if [ -d dist ]; then
-            find dist -maxdepth 3 -print
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund || npm install --no-audit --no-fund
           else
-            echo "dist is missing"; exit 1
+            npm install --no-audit --no-fund
           fi
+
+      - name: Build
+        run: npm run generate
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Si tu déploies TOUT le build (avec un index à la racine) :
           path: dist
-          # Sinon, commente la ligne ci-dessus et utilise un client précis :
-          # path: dist/clients/demo-bidon
 
   deploy:
     needs: build
